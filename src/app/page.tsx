@@ -1,15 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
+import JobStatusStep from "./cancel-flow/steps/JobStatusStep";
+import { getOrAssignVariant } from "@/lib/variant";
 
-// Mock user data for UI display
+
 const mockUser = {
   email: 'user@example.com',
   id: '1'
 };
 
-// Mock subscription data for UI display
+
 const mockSubscriptionData = {
+  id: "mock-sub-1",              
+  user_id: mockUser.id,
   status: 'active',
   isTrialSubscription: false,
   cancelAtPeriodEnd: false,
@@ -21,9 +25,12 @@ const mockSubscriptionData = {
   downsellAccepted: false
 };
 
+
 export default function ProfilePage() {
+  const [showCancelFlow, setShowCancelFlow] = useState(false);
   const [loading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [variant, setVariant] = useState<"A" | "B" | null>(null);
   
   // New state for settings toggle
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
@@ -40,6 +47,18 @@ export default function ProfilePage() {
   const handleClose = () => {
     console.log('Navigate to jobs');
   };
+
+
+  useEffect(() => {
+  async function fetchVariant() {
+    // Replace with actual subscription id from Supabase, for now use mock
+    const subscriptionId = "mock-subscription-id"; 
+    const v = await getOrAssignVariant(mockUser.id, subscriptionId);
+    setVariant(v);
+  }
+  fetchVariant();
+}, []);
+
 
   if (loading) {
     return (
@@ -248,16 +267,34 @@ export default function ProfilePage() {
                       <span className="text-sm font-medium">View billing history</span>
                     </button>
                     <button
-                      onClick={() => {
-                        console.log('Cancel button clicked - no action');
-                      }}
-                      className="inline-flex items-center justify-center w-full px-4 py-3 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm group"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                      </svg>
-                      <span className="text-sm font-medium">Cancel Migrate Mate</span>
+                          onClick={async () => {
+                            // For now, mock subscription id — replace with actual from DB if you fetch later
+                            const subscriptionId = "550e8400-e29b-41d4-a716-446655440001"; 
+                            const v = await getOrAssignVariant(mockUser.id, subscriptionId);
+                        
+                            setVariant(v);
+                            setShowCancelFlow(true);
+                          }} // <-- new state we add
+                          className="inline-flex items-center justify-center w-full px-4 py-3 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 hover:border-red-300 transition-all duration-200 shadow-sm group"
+>
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span className="text-sm font-medium">Cancel Migrate Mate</span>
                     </button>
+                    {showCancelFlow && variant && (
+                        <JobStatusStep
+                          variant={variant}
+                          subscriptionData={mockSubscriptionData}
+                          onSelect={(answer: string) => {
+                            console.log("User picked:", answer);
+                            setShowCancelFlow(false);
+                          }}
+                          onClose={() => setShowCancelFlow(false)}
+                        />
+                      )}
+
+                    
                   </div>
                 </div>
               </div>
@@ -268,3 +305,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
